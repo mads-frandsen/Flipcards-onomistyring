@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Økonomistyring — vendespil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#16304D;
+    --ink-soft:#3A5670;
+    --paper:#EEF1F4;
+    --card:#FFFFFF;
+    --accent:#D98A2B;
+    --line:#D5DCE3;
+    --c-besl:#C2410C;
+    --c-abc:#1D6F6F;
+    --c-kunde:#6D28D9;
+    --c-trad:#B45309;
+    --c-bsc:#2563A0;
+    --c-qual:#15803D;
+    --c-std:#4338CA;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+    padding:28px 18px 60px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px;margin:0 auto}
+  header{margin-bottom:22px}
+  .eyebrow{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:12px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--accent);margin-bottom:6px;
+  }
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:30px;font-weight:700;line-height:1.05;letter-spacing:-.01em;
+  }
+  .sub{color:var(--ink-soft);font-size:14px;margin-top:8px;max-width:52ch}
+
+  .filters{display:flex;flex-wrap:wrap;gap:7px;margin:20px 0 14px}
+  .chip{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:12.5px;font-weight:500;
+    border:1.5px solid var(--line);background:transparent;color:var(--ink-soft);
+    padding:7px 13px;border-radius:999px;cursor:pointer;transition:.15s;
+    display:flex;align-items:center;gap:7px;
+  }
+  .chip:hover{border-color:var(--ink-soft)}
+  .chip .dot{width:9px;height:9px;border-radius:50%;background:var(--c)}
+  .chip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .chip.active .dot{box-shadow:0 0 0 2px rgba(255,255,255,.3)}
+  .chip.all.active{background:var(--accent);border-color:var(--accent)}
+
+  .bar{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    margin:6px 0 18px;font-size:13px;color:var(--ink-soft);
+  }
+  .progress{flex:1;height:6px;background:#DCE2E8;border-radius:99px;overflow:hidden}
+  .progress span{display:block;height:100%;background:var(--accent);width:0;transition:.4s}
+  .count{font-family:'Space Grotesk',sans-serif;font-weight:500;white-space:nowrap}
+
+  .stage{perspective:1600px;margin-bottom:18px;position:relative}
+  .park{
+    position:absolute;top:14px;right:14px;z-index:20;
+    font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:500;
+    border:1.5px solid var(--line);background:#fff;color:var(--ink-soft);
+    padding:7px 12px;border-radius:999px;cursor:pointer;transition:.15s;
+    display:flex;align-items:center;gap:6px;box-shadow:0 2px 8px -4px rgba(22,48,77,.4);
+  }
+  .park:hover{border-color:#15803D;color:#15803D;background:#F0FAF3}
+  .park::before{content:"";font-weight:700}
+  .park.on{border-color:#15803D;color:#fff;background:#15803D}
+  .park.on::before{content:"✓ "}
+  .park.on:hover{background:#126e35}
+  .btn-shuffle.active-mode{border-color:var(--accent);color:var(--accent);background:#FBF3E7}
+  .card{
+    position:relative;width:100%;min-height:340px;
+    transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,.1,.2,1);
+    cursor:pointer;
+  }
+  .card.flipped{transform:rotateY(180deg)}
+  .face{
+    position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+    background:var(--card);border-radius:18px;border:1px solid var(--line);
+    box-shadow:0 14px 34px -22px rgba(22,48,77,.5);
+    padding:30px 30px 64px;display:flex;flex-direction:column;
+  }
+  .face.back{transform:rotateY(180deg);overflow-y:auto;padding-bottom:30px}
+  .tag{
+    font-family:'Space Grotesk',sans-serif;font-size:11.5px;font-weight:500;
+    letter-spacing:.05em;text-transform:uppercase;color:var(--c,var(--ink-soft));
+    display:flex;align-items:center;gap:8px;margin-bottom:auto;
+  }
+  .tag::before{content:"";width:22px;height:3px;border-radius:2px;background:var(--c,var(--ink-soft))}
+  .uddyb{
+    margin-top:14px;align-self:flex-start;
+    font-family:'Space Grotesk',sans-serif;font-size:12.5px;font-weight:500;
+    border:1.5px solid var(--c,var(--line));background:transparent;color:var(--c,var(--ink-soft));
+    padding:8px 14px;border-radius:10px;cursor:pointer;transition:.15s;
+  }
+  .uddyb:hover{background:var(--c);color:#fff}
+  .deep{
+    margin-top:12px;font-size:14px;line-height:1.5;color:var(--ink);
+    background:#F7F9FB;border-left:3px solid var(--c,var(--accent));
+    padding:12px 14px;border-radius:8px;display:none;
+  }
+  .deep.show{display:block}
+  .term{
+    font-family:'Space Grotesk',sans-serif;font-weight:700;
+    font-size:30px;line-height:1.12;letter-spacing:-.01em;margin:auto 0;
+  }
+  .front .hint{position:absolute;left:30px;bottom:22px;font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;gap:7px}
+  .front .hint::before{content:"";width:14px;height:14px;border:1.5px solid var(--accent);border-radius:50%;display:inline-block}
+  .def{font-size:17px;line-height:1.5;margin:6px 0 auto;color:var(--ink)}
+  .def b{color:var(--c,var(--ink))}
+  .extra{margin-top:14px;font-size:13.5px;line-height:1.45;color:var(--ink-soft);border-top:1px dashed var(--line);padding-top:12px}
+
+  .controls{display:flex;gap:10px;align-items:center}
+  .btn{
+    font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:500;
+    border:none;border-radius:12px;padding:13px 16px;cursor:pointer;transition:.15s;flex:1;
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn-nav{background:#fff;border:1px solid var(--line);color:var(--ink);flex:0 0 52px}
+  .btn-nav:hover{border-color:var(--ink-soft)}
+  .btn-again{background:#fff;border:1.5px solid var(--c-besl);color:var(--c-besl)}
+  .btn-again:hover{background:#FBEDE6}
+  .btn-know{background:var(--ink);color:#fff}
+  .btn-know:hover{background:#0F2438}
+  .btn-shuffle{
+    background:transparent;border:1px solid var(--line);color:var(--ink-soft);
+    font-family:'Space Grotesk',sans-serif;font-size:13px;padding:8px 14px;border-radius:10px;
+    cursor:pointer;margin-top:4px;
+  }
+  .btn-shuffle:hover{border-color:var(--ink-soft);color:var(--ink)}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+  .done{text-align:center;padding:50px 20px}
+  .done h2{font-family:'Space Grotesk',sans-serif;font-size:24px;margin-bottom:10px}
+  .done p{color:var(--ink-soft);font-size:15px;margin-bottom:20px}
+  @media(max-width:560px){
+    h1{font-size:25px}.term{font-size:25px}.face{min-height:0;padding:26px 22px 60px}
+    .card{min-height:320px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">FIBA · 4. semester · eksamen fredag</div>
+    <h1>Vendespil — Økonomistyring</h1>
+    <p class="sub">Læs begrebet, sig forklaringen højt, og vend kortet. Marker om det sad. Definitionerne er trukket fra dine egne lektionsnotater.</p>
+  </header>
+
+  <div class="filters" id="filters"></div>
+
+  <div class="bar">
+    <div class="progress"><span id="progFill"></span></div>
+    <div class="count" id="count">0 / 0</div>
+  </div>
+
+  <div id="app"></div>
+
+  <div class="toolbar">
+    <button class="btn-shuffle" id="shuffle">↻ Bland kortene</button>
+    <button class="btn-shuffle" id="mode">Vis kun dem jeg ikke kan</button>
+    <button class="btn-shuffle" id="clear">Ryd markeringer</button>
+  </div>
+</div>
+
+<script>
+const CATS = {
+  besl:{name:"Beslutning & pris (L7)", c:"var(--c-besl)"},
+  abc:{name:"ABC (L4-5)", c:"var(--c-abc)"},
+  kunde:{name:"Kunderentabilitet (L6)", c:"var(--c-kunde)"},
+  trad:{name:"Traditionel fordeling (L3)", c:"var(--c-trad)"},
+  bsc:{name:"BSC & KPI (L1-2)", c:"var(--c-bsc)"},
+  qual:{name:"Quality & Kaizen (L8)", c:"var(--c-qual)"},
+  std:{name:"Standardomk. (L9)", c:"var(--c-std)"},
+};
+
+const CARDS = [
+  // --- Beslutning & pris ---
+  {cat:"besl",term:"Relevante omkostninger",def:"<b>Fremtidige</b> omkostninger som <b>adskiller sig</b> mellem de beslutningsalternativer man overvejer.",extra:"To krav: endnu ikke afholdt + ændrer sig afhængigt af valget. Omkostninger der er ens uanset valg er irrelevante."},
+  {cat:"besl",term:"Sunk cost",def:"Allerede afholdte omkostninger som <b>ikke påvirkes</b> af en beslutning.",extra:"Sunk costs er derfor ALTID irrelevante. Klassisk fælde: at lade tabte penge styre en fremtidig beslutning."},
+  {cat:"besl",term:"Offeromkostning",def:"Det beløb man <b>må ofre</b> ved at gennemføre en handling på bekostning af en alternativ handling.",extra:"Også kaldt alternativomkostning. Bliver relevant ved KNAP kapacitet — fx det DB man mister på en fortrængt ordre."},
+  {cat:"besl",term:"Grænseomkostning",def:"Omkostningen ved at producere eller levere <b>én ekstra enhed</b>.",extra:"Marginalomkostning. Central i særordrer: hvad koster den næste enhed reelt?"},
+  {cat:"besl",term:"Undgåelige omkostninger",def:"Omkostninger som <b>varierer med handlingsalternativet</b> og er helt eller delvist undgåelige.",extra:"Kun de undgåelige er relevante for fx 'skal vi droppe en kunde'. Uundgåelige (faste) forsvinder ikke — de bliver bare til ledig kapacitet."},
+  {cat:"besl",term:"Make-or-buy",def:"Beslutning om at <b>producere selv eller outsource</b> — afgjort på de relevante omkostninger.",extra:"Husk det strategiske: kernekompetence, konkurrencefordel, forsyningssikkerhed. Faste omk. tæller kun med hvis de er undgåelige ved outsourcing."},
+  {cat:"besl",term:"Særordre (tilbudsgivning)",def:"En ekstra ordre vurderes på om den giver <b>positivt dækningsbidrag</b>.",extra:"Ved ledig kapacitet: accepter hvis pris > variable omk. Ved knap kapacitet: medregn offeromkostningen ved den fortrængte ordre."},
+  {cat:"besl",term:"Cost-plus",def:"Pris = omkostninger + tillæg. Svarer på <b>'hvad vil vi have'</b> — ikke hvad markedet vil betale.",extra:"Enkel og intuitiv, men intern fokus. Bygger på historiske tal og fordelte indirekte omkostninger."},
+  {cat:"besl",term:"Target costing",def:"Markedsprisen accepteres som ydre ramme — virksomheden skal <b>designe og reducere sig ned</b> til target cost.",extra:"Markeds- og kundeorienteret. Modsætning til cost-plus. Target cost = markedspris − ønsket fortjeneste."},
+  {cat:"besl",term:"Value engineering",def:"Find sammenhængen mellem <b>kundeværdi</b> og produktets komponenter, og optimer derefter.",extra:"Værdianalyse. Bruges i target costing til at skære omkostninger uden at fjerne det kunden værdsætter."},
+  {cat:"besl",term:"Ledig vs. knap kapacitet",def:"Afgør om en særordre vurderes på <b>variable omk. alene</b> (ledig) eller skal bære en <b>offeromkostning</b> (knap).",extra:"Ledig kapacitet: accepter hvis pris > variable omk. Knap kapacitet: ordren fortrænger noget andet — medregn det mistede DB. Samme pris kan være OK i det ene tilfælde og tabsgivende i det andet."},
+  {cat:"besl",term:"Variabilitet & reversibilitet",def:"Hvordan en omkostning <b>reagerer på aktivitetsændringer</b> (variabilitet) og om den kan <b>rulles tilbage</b> igen (reversibilitet).",extra:"Afgør hvad der reelt sker hvis salget falder. En fast løn er ikke reversibel på kort sigt — derfor forsvinder den ikke selvom en kunde droppes. Kernen i følsomhedsanalyse."},
+  {cat:"besl",term:"Product life cycle costing",def:"Vurderer omkostninger over <b>hele produktets livscyklus</b> — fra design til afvikling.",extra:"Bredere end ét regnskabsår. Kobler design (target costing), produktion (kaizen) og afvikling sammen i ét omkostningssyn."},
+
+  // --- ABC ---
+  {cat:"abc",term:"Cost object",def:"Det <b>omkostningsformål</b> vi vil beregne omkostningen for — fx et produkt, en kunde eller en ordre.",extra:"Hele ABC-modellen ender med at fordele omkostninger ned på cost objektet."},
+  {cat:"abc",term:"Cost driver",def:"Den faktor der <b>forårsager</b> en aktivitets omkostning — en årsags-virkningssammenhæng.",extra:"Fx antal kald for kundeservice, antal ordrer for ordrehåndtering. Vælges ud fra hvad der reelt driver omkostningen."},
+  {cat:"abc",term:"Cost driver sats",def:"<b>IPO ÷ kapacitet</b> — prisen pr. driver-enhed.",extra:"Hele pointen ligger i nævneren: hvilken kapacitet dividerer du med? Det afgør satsen og dermed lønsomheden."},
+  {cat:"abc",term:"ABC trin 1 — Identificér",def:"Udpeg <b>aktiviteterne</b> og giv hver én <b>cost driver</b>. Ingen tal endnu.",extra:"Eksempel: 'Kundeservice er en aktivitet, og driveren er antal opkald.' Samme for ordrehåndtering (antal ordrer), levering (antal leveringer), salgsbesøg (antal besøg)."},
+  {cat:"abc",term:"ABC trin 2 — Fyld",def:"Fordel <b>kapacitetsomkostningerne ud på aktiviteterne</b> via fordelingsnøglerne.",extra:"Eksempel: lager-lønnen (750.000) ganges med 100% til levering. Indkøb (410.000) deles 40/30/30. Resultatet er aktivitetspuljerne: kundeservice 869.000, ordrehåndtering 1.218.000 osv."},
+  {cat:"abc",term:"ABC trin 3 — Prissæt",def:"Beregn en <b>sats pr. aktivitet</b>: pulje ÷ praktisk kapacitet.",extra:"Eksempel: kundeservice 869.000 ÷ 5.000 kald = 173,8 kr./kald. Vælg praktisk kapacitet, så satsen er stabil og ledig kapacitet bliver synlig."},
+  {cat:"abc",term:"ABC trin 4 — Fordel",def:"Fordel ud på <b>cost objektet</b>: sats × kundens træk.",extra:"Eksempel: Online lavede 3.254 kald × 173,8 = 565.545 i kundeservice. Det fordelte i alt er mindre end puljen — forskellen er ledig kapacitet, der ikke lægges på nogen kunde."},
+  {cat:"abc",term:"Aktivitetshierarki",def:"Omkostninger ligger på niveauer: <b>enhed, batch, produkt/kunde, virksomhed</b>.",extra:"Virksomhedsniveau (fx generel ledelse) har ingen meningsfuld driver og fordeles IKKE på kunder — det trækkes fra samlet."},
+  {cat:"abc",term:"Teoretisk kapacitet",def:"100% — alt kører på maks, <b>ingen nedbrud</b> eller vedligehold.",extra:"Urealistisk. Giver lavest mulige sats, men en kapacitet man aldrig opnår."},
+  {cat:"abc",term:"Praktisk kapacitet",def:"Ca. 80% af teoretisk — tager højde for <b>nedbrud, vedligehold</b> mv.",extra:"ABC-standarden. Realistisk opnåeligt niveau. Brug denne, så ledig kapacitet bliver synlig i stedet for skjult hos kunderne."},
+  {cat:"abc",term:"Faktisk kapacitet",def:"Hvad der <b>faktisk er produceret</b> i en given periode (historisk).",extra:"Problem som sats-nævner: når salget falder, STIGER satsen — kunderne straffes for tomgang. Ustabilt."},
+  {cat:"abc",term:"Planlagt kapacitet",def:"Hvad der <b>forventes produceret</b> i den kommende periode (budgetteret).",extra:"Fremadrettet skøn. Ligger typisk mellem faktisk og praktisk."},
+  {cat:"abc",term:"Ledig kapacitet",def:"Forskellen mellem (praktisk) kapacitet og faktisk forbrug — kapacitet der er <b>betalt for men ikke brugt</b>.",extra:"Fordeles IKKE på kunderne. Det er ledelsens omkostning (de anskaffede kapaciteten), ikke kundens. Trækkes fra som periodeomkostning."},
+  {cat:"abc",term:"ABC — stærke sider",def:"Større <b>gennemsigtighed</b>, mere præcis lønsomhed pr. cost object, fokus på ikke-værdiskabende aktiviteter.",extra:"Kan bruges til inspirationsanalyse og benchmarking. Giver mere præcise kalkulationer end traditionel fordeling."},
+  {cat:"abc",term:"ABC — svage sider",def:"Tager ikke højde for <b>offeromkostninger, variabilitet/reversibilitet</b> eller markedsinfo.",extra:"Kan ikke stå alene som beslutningsredskab. Ressourcekrævende at udvikle og vedligeholde; kræver ofte nye registreringer."},
+  {cat:"abc",term:"Transaktionsdriver",def:"En driver der tæller <b>antal gange</b> en aktivitet udføres — fx antal ordrer eller antal kald.",extra:"Den simpleste drivertype. Antager at hver transaktion trækker lige meget. Billig at måle, men grov hvis transaktionerne er forskellige i omfang."},
+  {cat:"abc",term:"Varighedsdriver",def:"En driver der måler <b>hvor lang tid</b> en aktivitet tager — fx opsætningstimer.",extra:"Mere præcis end transaktionsdriveren når aktiviteter varierer i varighed. Fanger at en kompleks ordre tager længere tid end en simpel."},
+  {cat:"abc",term:"Intensitetsdriver (direkte måling)",def:"<b>Direkte måling</b> af de faktiske ressourcer en aktivitet bruger i det enkelte tilfælde.",extra:"Mest præcis, men dyrest at måle. Bruges når selv tiden ikke fanger forskellen — fx hvis nogle opgaver kræver dyrt specialudstyr."},
+  {cat:"abc",term:"Årsags-virkningssammenhæng",def:"Princippet om at en cost driver skal <b>forårsage</b> den omkostning den fordeler.",extra:"Det bærende kriterium for at vælge driver. \"Varierer meget\" er ikke nok — der skal være en kausal grund til at netop den driver styrer omkostningen."},
+  {cat:"abc",term:"Fuldfordeling vs. ABC",def:"Fuldfordeling bruger <b>én grov nøgle</b> (styk, direkte omk.); ABC bruger <b>flere årsagsbestemte drivere</b>.",extra:"Trappen: stykfordeling (alle ens) → direkte omk. som proxy → ABC (måler træk pr. aktivitet). Valg af nøgle kan vende hvem der ser rentabel ud — derfor er metodevalget kritisk."},
+
+  // --- Kunderentabilitet ---
+  {cat:"kunde",term:"Whale-kurve",def:"Akkumuleret lønsomhed med kunderne <b>rangordnet efter resultat</b> — viser hvordan få kunder skaber overskuddet.",extra:"Kurven stiger over 100% og falder tilbage. Toppen = de rentable kunders bidrag; halen = det de urentable destruerer igen."},
+  {cat:"kunde",term:"Customer Lifetime Value",def:"<b>Nutidsværdien</b> af en kundes fremtidige dækningsbidrag over levetiden, minus anskaffelsesomkostningen.",extra:"Tre dæmpere: kalkulationsrente (diskontering), genkøb/churn (levetid) og tidshorisont."},
+  {cat:"kunde",term:"Fastholdelsesrate",def:"Sandsynligheden for at en kunde <b>bliver hængende</b> (genkøb) — den stables år for år.",extra:"År 2 = genkøb², år 3 = genkøb³. Høj rate = lang levetid = mere værd. Forventet levetid ≈ 1 / (1 − genkøb)."},
+  {cat:"kunde",term:"Tilbagediskontering",def:"Fremtidige beløb omregnes til <b>nutidsværdi</b> med kalkulationsrenten.",extra:"En krone om to år er mindre værd end en krone i dag. Faktor = 1 / (1 + rente)^år."},
+  {cat:"kunde",term:"Anskaffelsesomkostning",def:"Omkostningen ved at <b>hverve en ny kunde</b>.",extra:"Trækkes fra i CLV. Hvis den overstiger den tilbagediskonterede indtjening, er kunden negativ at anskaffe."},
+  {cat:"kunde",term:"Dækningsbidrag",def:"<b>Omsætning minus variable omkostninger</b> — bidraget til at dække de faste omkostninger.",extra:"Over stregen i resultatopgørelsen. Negativt DB betyder at kunden taber penge på selve varen, før bagland overhovedet regnes med — en helt anden sygdom end dyre aktiviteter."},
+  {cat:"kunde",term:"Resultatgrad",def:"<b>Resultat ÷ omsætning</b> i procent — kvaliteten af en kunde uafhængigt af størrelse.",extra:"Gør store og små kunder sammenlignelige. Men høj resultatgrad ≠ høj kroneindtjening — en stor kunde kan bidrage flest kroner trods lav grad."},
+
+  // --- Traditionel fordeling ---
+  {cat:"trad",term:"Volumenbaseret fordelingsnøgle",def:"En nøgle der fordeler indirekte omk. efter <b>volumen</b> (styk, timer, kroner) frem for faktisk aktivitetstræk.",extra:"Fx antal styk eller direkte omk. som proxy. Bedre end ingenting, men antager at træk følger volumen — det er netop dét ABC gør op med."},
+  {cat:"trad",term:"Direkte omkostninger",def:"Omkostninger der kan <b>henføres direkte</b> til cost objektet.",extra:"Fx direkte materialer og direkte løn. Kræver ingen fordelingsnøgle."},
+  {cat:"trad",term:"Indirekte omkostninger (IPO)",def:"Omkostninger der <b>ikke kan henføres direkte</b> — skal fordeles via puljer og nøgler.",extra:"Indirekte produktionsomkostninger. Det er DEM ABC forsøger at fordele mere præcist end traditionelle systemer."},
+  {cat:"trad",term:"Omkostningspulje",def:"En <b>homogen samling</b> af omkostninger der fordeles samlet (cost pool).",extra:"Trin 3 i fordeling: akkumuler de omkostninger der skal fordeles i homogene puljer, før du vælger fordelingsmetode."},
+  {cat:"trad",term:"Single rate",def:"Faste og variable omkostninger i <b>én pulje, én sats</b>, fordelt efter faktisk forbrug.",extra:"Simpelt, men skjuler at faste omk. ikke varierer med forbruget. Kan give misvisende signaler."},
+  {cat:"trad",term:"Dual rate",def:"<b>To satser</b>: variable efter faktisk forbrug, faste efter budgetteret kapacitet/reserveret andel.",extra:"Bedre end single rate — faste omk. hører til den der reserverede kapaciteten, ikke den der tilfældigt brugte mest. Samme princip som ledig kapacitet i ABC."},
+
+  // --- BSC & KPI ---
+  {cat:"bsc",term:"Balanced Scorecard",def:"Et værktøj til at <b>måle strategien</b> via fire perspektiver med både finansielle og non-finansielle mål.",extra:"Kobler KSF → KPI → target → strategiske initiativer. Skal afspejle årsags-virkningssammenhænge."},
+  {cat:"bsc",term:"De fire perspektiver",def:"<b>Finans, Kunder, Processer, Læring & vækst.</b>",extra:"Logikken nedefra-op: dygtige medarbejdere → gode processer → glade kunder → tilfredse ejere."},
+  {cat:"bsc",term:"Strategikort",def:"Oversættelsen af strategien — viser <b>årsags-virkningssammenhænge</b> mellem perspektiverne.",extra:"Holistisk, skaber konsensus, formulerer strategiske hypoteser og værditilbud. Kommer FØR selve scorecardet."},
+  {cat:"bsc",term:"KSF",def:"<b>Kritiske succesfaktorer</b> — det der skal lykkes for at indfri strategien.",extra:"Hver KSF får en eller flere KPI'er knyttet til sig så man kan måle om den nås."},
+  {cat:"bsc",term:"KPI",def:"<b>Key Performance Indicator</b> — målepunktet for en KSF.",extra:"\"What you measure is what you get\" — KPI'er er stærkt adfærdsregulerende. Et godt KPI er koblet til strategien og enkelt at forstå."},
+  {cat:"bsc",term:"KPI-faldgruber",def:"For mange KPI'er, <b>manglende strategikobling</b>, dårlig datakvalitet, intet ambitionsniveau.",extra:"Risiko: man ender med et nøgletalssystem i stedet for KPI'er. Keep it simple — der er grænser for hvor mange en organisation kan styre efter."},
+  {cat:"bsc",term:"De tre P'er",def:"Bæredygtighed i bred forstand: <b>People, Planet, Profit</b>.",extra:"Triple bottom line. Kobler ESG-tankegangen ind i styringen — relevant i en BSC med bæredygtighedsperspektiv (fx BambuRun)."},
+  {cat:"bsc",term:"Scope 1, 2 og 3",def:"Klimaregnskabets tre niveauer: <b>egne udledninger (1), energi (2), værdikæden (3)</b>.",extra:"Scope 3 (leverandører, transport, brug) er størst og sværest at måle. Fra ekstern ESG-rapportering til intern styring."},
+  {cat:"bsc",term:"Indsats- vs. resultatmål",def:"Indsatsmål måler <b>det man gør</b> (leading); resultatmål måler <b>udfaldet</b> (lagging).",extra:"Et godt scorecard balancerer begge. Indsatsmål er tidlige advarsler — jo før man reagerer, jo større spillerum."},
+
+  // --- Quality & Kaizen ---
+  {cat:"qual",term:"Quality Costing",def:"Find og <b>forhindr fejl</b> i processen. Rationale: kvalitetsomkostninger < senere fejludbedring.",extra:"Fange fejl tidligt = lav omk. Fange sent = høj omk. Fire typer kvalitetsomkostninger."},
+  {cat:"qual",term:"Forebyggelsesomkostninger",def:"Omkostninger til at <b>forhindre fejl</b> opstår.",extra:"Fx oplæring, ISO-certificering, leverandørkvalificering, design af kontrolsystemer. Tidligst i kæden — billigst."},
+  {cat:"qual",term:"Kontrolomkostninger",def:"Omkostninger til <b>kvalitetskontrol</b>.",extra:"Fx test af rå-, mellem- og færdigvarer samt testudstyr. Fanger fejl før de slipper ud."},
+  {cat:"qual",term:"Interne fejlomkostninger",def:"Omkostninger ved fejl der opdages <b>før levering</b>.",extra:"Fx omarbejde, kassation, forsinkelse af øvrig produktion. Dyrere end forebyggelse, billigere end eksterne fejl."},
+  {cat:"qual",term:"Eksterne fejlomkostninger",def:"Omkostninger ved fejl der opdages af <b>kunden</b>.",extra:"Fx klagehåndtering, udbedring og — vigtigst — tab af image. Dyrest, og kan have offeromkostninger udover de bogførte."},
+  {cat:"qual",term:"Kaizen costing",def:"<b>Løbende forbedring</b> og omkostningsreduktion i produktionsfasen.",extra:"Modsat target costing (radikal forbedring i designfasen). Lille, kontinuerligt pres på omkostningerne."},
+  {cat:"qual",term:"Lean",def:"Fokus på at <b>minimere ikke-værdiskabende aktiviteter</b>.",extra:"Fordel: effektive processer, bedre konkurrenceevne. Ulempe: kan stresse medarbejdere og fjerne buffer/fleksibilitet."},
+
+  // --- Standardomkostninger (L9) ---
+  {cat:"std",term:"Standardomkostningsregnskab",def:"Et værktøj til at <b>dekomponere budgetafvigelsen</b>, så man kan se hvor det gik galt.",extra:"Formålet er at adressere afvigelser det rigtige sted i organisationen — er det salg, indkøb eller produktion der skal handle? Afvigelser opdeles i niveauer."},
+  {cat:"std",term:"Statisk budget",def:"Det <b>oprindelige budget</b> med de planlagte mængder og priser.",extra:"Udgangspunktet før noget skete. Forskellen mellem statisk budget og det realiserede er den samlede budgetafvigelse — men den fortæller ikke hvorfor. Derfor splittes den op."},
+  {cat:"std",term:"Fleksibelt budget",def:"Hvordan budgettet <b>ville have set ud med de realiserede mængder</b>.",extra:"Bindeleddet i analysen. Det isolerer mængdeeffekten fra priseffekten: sammenlign statisk vs. fleksibelt = mængdeafvigelse; fleksibelt vs. realiseret = pris/effektivitet. Også kaldt standardbudget."},
+  {cat:"std",term:"Mængdeafvigelse (volumen)",def:"Ændring i DB fordi der blev solgt <b>flere/færre enheder</b> end budgetteret.",extra:"Standard DB × (faktisk - budgetteret afsætning). Fanger salgsvolumen, ikke pris eller effektivitet. Statisk vs. fleksibelt budget. Solgte du 900 i stedet for 1.000, taber du 100 × standard-DB."},
+  {cat:"std",term:"Salgsprisafvigelse",def:"Ændring i DB fordi <b>salgsprisen</b> blev en anden end budgetteret.",extra:"Faktisk mængde × (faktisk - budgetteret salgspris). Solgte du til 105 i stedet for 100, og afsatte 900 stk., er det 900 × 5 = +4.500. Hører til salgsfunktionen."},
+  {cat:"std",term:"Pris-/satsafvigelse (input)",def:"Ændring i omkostning fordi <b>indkøbspris eller lønsats</b> blev en anden.",extra:"Faktisk mængde × (standard - faktisk pris). Eksempel spande: 240 kg × (15 - 16) = -240. Betalte du mere pr. kg/time end standard, er afvigelsen ugunstig. Hører til indkøb/HR."},
+  {cat:"std",term:"Effektivitets-/forbrugsafvigelse",def:"Ændring fordi der blev brugt <b>mere/mindre materiale eller tid</b> pr. enhed.",extra:"Standard pris × (standard - faktisk forbrug). Eksempel spande: 15 × (250 - 240) = +150 — brugte mindre materiale end standard, gunstigt. Hører til produktionen."},
+  {cat:"std",term:"Gunstig vs. ugunstig afvigelse",def:"<b>Gunstig (F)</b> forbedrer DB; <b>ugunstig (U)</b> forværrer det.",extra:"Favorable/Unfavorable. Pas på fortegn: en omkostning der falder er gunstig (+ for DB), en omsætning der falder er ugunstig. Det handler om effekten på DB, ikke om tallet i sig selv er positivt eller negativt."},
+  {cat:"std",term:"Afvigelses-niveauer",def:"Afvigelsen dekomponeres trinvist: <b>niveau 0 → 1 → 2 → 3</b>.",extra:"Niveau 0: samlet DB-afvigelse. Niveau 1: mængde (volumen) vs. fleksibelt-budget-afvigelse. Niveau 2-3: salgspris, pris/sats, effektivitet. Jo dybere, jo mere præcist kan man pege på årsagen."},
+];
+
+const MORE = {
+"Relevante omkostninger":"Tænk på det som et filter du lægger over alle tal i en beslutning: spørg ved hver omkostning 'ændrer den sig hvis jeg vælger A frem for B, og er den endnu ikke afholdt?' Kun hvis svaret er ja til begge, skal den med. I BambuRun: hvis I overvejer at droppe Online, er sælgerens faste løn ikke relevant (den ændrer sig ikke), men vareforbruget er.",
+"Sunk cost":"Den klassiske fælde hedder 'now that we've come this far'. Har I brugt 200.000 på en kollektion der floppede, er de 200.000 væk uanset hvad I nu vælger. Beslutningen om at fortsætte eller stoppe skal kun se fremad. Mange fortsætter med tabsprojekter netop fordi de skæver til det allerede brugte — det er irrationelt.",
+"Offeromkostning":"Den er 'usynlig' i regnskabet, fordi den ikke er en udgift men en mistet mulighed. Eksempel: sælgeren bruger en dag hos Sportigan. Offeromkostningen er det dækningsbidrag han kunne have skabt ved at besøge en rentabel kunde i stedet. Den dukker kun op når kapaciteten er knap — ved ledig kapacitet er der intet alternativ at ofre.",
+"Grænseomkostning":"Forskellen på grænse- og gennemsnitsomkostning er central. Hvis lageret allerede er bemandet, kan den næste ordre koste næsten ingenting ekstra at ekspedere — grænseomkostningen er lav, selvom den gennemsnitlige omkostning pr. ordre ser høj ud. Det er derfor en særordre kan være attraktiv selvom prisen er under fuld kostpris.",
+"Undgåelige omkostninger":"Den eneste type der tæller i en 'skal vi droppe X'-beslutning. Da I diskuterede at fyre Online: vareforbrug og donation er undgåelige (forsvinder med kunden), men kundeservice-løn og lager er uundgåelige på kort sigt — de bliver bare til ledig kapacitet. Derfor forbedres resultatet kun med kundens dækningsbidrag, ikke hele dens underskud.",
+"Make-or-buy":"To lag: et regnestykke og en strategi. Regnestykket: sammenlign de undgåelige egne omkostninger med indkøbsprisen — faste omk. tæller kun hvis de faktisk bortfalder ved outsourcing. Strategien: mister vi en kernekompetence, bliver vi afhængige af leverandøren, kan vi sikre kvaliteten? Et lavt indkøbstilbud kan stadig være forkert hvis det udhuler virksomheden.",
+"Særordre (tilbudsgivning)":"Beslutningen afhænger helt af kapaciteten. Ledig kapacitet: accepter hvis prisen overstiger de variable omkostninger — alt derover er ekstra dækningsbidrag. Knap kapacitet: ordren fortrænger noget andet, så du skal lægge offeromkostningen oveni. Fælden er at sige nej til en god særordre fordi prisen er under fuld kostpris — den fulde kostpris er irrelevant ved ledig kapacitet.",
+"Cost-plus":"Indefra-og-ud-tankegang: 'vores omkostninger er X, vi vil have Y i avance, altså er prisen X+Y.' Problemet er at markedet er ligeglad med dine omkostninger. Du risikerer at prissætte dig ud af markedet (for dyrt) eller efterlade penge på bordet (for billigt). Simpel og udbredt, men intern og bagudskuende. Modsætningen er target costing.",
+"Target costing":"Udefra-og-ind: start med hvad markedet vil betale, træk den ønskede avance fra, og det der er tilbage er din target cost — som produktet SKAL designes ned til. Vender hele logikken om ift. cost-plus. Bruges typisk i designfasen af nye produkter, hvor man stadig kan påvirke omkostningerne via value engineering.",
+"Value engineering":"Den praktiske motor i target costing. Man kortlægger hvilke komponenter kunden faktisk værdsætter, og skærer omkostninger på det de er ligeglade med. Eksempel: kunden betaler for løbetøjets komfort og bæredygtighed, ikke for en dyr indpakning — så reducer indpakningen, behold materialekvaliteten. Skær fedt, ikke muskel.",
+"Ledig vs. knap kapacitet":"Den mest oversete skelnen i beslutningsopgaver. Samme ordre til samme pris kan være en god forretning (ledig kapacitet — ren bonus oven på dækningsbidraget) eller et tab (knap kapacitet — den fortrænger noget mere værdifuldt). Spørg altid først: har vi plads, eller fortrænger det noget? Svaret ændrer hele regnestykket.",
+"Variabilitet & reversibilitet":"To dimensioner. Variabilitet: følger omkostningen aktiviteten (variabel) eller ej (fast)? Reversibilitet: kan vi rulle den tilbage hvis vi skærer ned? En fast løn er ikke reversibel fra dag til dag — du kan ikke fyre en halv medarbejder på en uge. Det er præcis derfor en 'undgåelig' omkostning på papiret ikke altid forsvinder i praksis, og hvorfor følsomhedsanalyser skal tage hensyn til tidshorisonten.",
+"Product life cycle costing":"Zoomer ud fra ét regnskabsår til hele produktets liv: udvikling, lancering, modning, afvikling. Et produkt kan tabe penge i år 1 (høje udviklings- og lanceringsomkostninger) men være guld over livscyklussen. Binder de andre værktøjer sammen: target costing styrer designfasen, kaizen styrer produktionsfasen.",
+"Cost object":"Det er valget af 'hvad vil vi kende prisen på' der styrer hele modellen. Samme virksomhed kan have produktet som cost object i én analyse og kunden i en anden — som i jeres case, hvor sp.2 har kundegruppen og sp.3 den enkelte kunde. Vælg cost object efter hvilken beslutning du skal træffe.",
+"Cost driver":"Nøgleordet er ÅRSAG. En god cost driver er ikke bare noget der korrelerer med omkostningen — den skal forårsage den. Kundeservice koster penge FORDI nogen ringer, så antal kald er en ægte driver. At vælge en driver der bare 'varierer meget' uden årsagssammenhæng giver misvisende kalkulationer.",
+"Cost driver sats":"Hele spændingen ligger i nævneren. Tælleren (omkostningspuljen) er nogenlunde given, men kapaciteten i nævneren er et VALG — teoretisk, praktisk, faktisk eller budgetteret — og det valg afgør både satsens størrelse og hvor meget ledig kapacitet der bliver synlig. Vælg praktisk, og vær klar til at forsvare det.",
+"ABC trin 1 — Identificér":"VERBET: identificér. Du kortlægger hvilke aktiviteter der forbruger ressourcer, og hvad der driver hver enkelt. Ingen kroner, ingen fordeling — bare navngivning. Eksempel fra BambuRun: kundeservice (driver: antal kald), ordrehåndtering (antal ordrer), levering (antal leveringer), salgsbesøg (antal besøg). Det er her årsagssammenhængen vælges — vælger du en dårlig driver, er hele modellen forkert bagefter.",
+"ABC trin 2 — Fyld":"VERBET: fyld. Du fylder aktiviteterne med penge ved at fordele kapacitetsomkostningerne ud via fordelingsnøglerne. Eksempel: lager-løn 750.000 × 100% til levering; indkøb 410.000 delt 40% kundeservice / 30% ordrehåndtering / 30% levering. Når alle poster er fordelt, har du aktivitetspuljerne: 869.000 / 1.218.000 / 1.428.000 / 665.000. Bemærk: de 180.000 generel ledelse og markedsføring fyldes IKKE i — de holdes ude.",
+"ABC trin 3 — Prissæt":"VERBET: prissæt. Du sætter en pris pr. driver-enhed på hver aktivitet: pulje ÷ kapacitet. Eksempel: 869.000 ÷ 5.000 kald (praktisk) = 173,8 kr./kald. Det vigtigste valg er nævneren — vælg PRAKTISK kapacitet, ikke faktisk. Så er satsen stabil (afhænger af anskaffet kapacitet, ikke tilfældigt forbrug), og den ubrugte kapacitet bliver synlig som en separat post.",
+"ABC trin 4 — Fordel":"VERBET: fordel. Du tømmer aktiviteterne ud på cost objektet efter hvor meget hver kunde trækker: sats × træk. Eksempel: Online 3.254 kald × 173,8 = 565.545 i kundeservice, og tilsvarende for de andre aktiviteter. Pointen: summen af alt det fordelte (2,78 mio.) er mindre end puljen (4,18 mio.) — forskellen på 1,4 mio. er ledig kapacitet, der bevidst ikke lægges på nogen kunde.",
+"Aktivitetshierarki":"Et lagkagesyn på omkostninger: enhedsniveau (pr. stk.), batchniveau (pr. ordre/levering), produkt-/kundeniveau, og virksomhedsniveau (generel ledelse). Pointen: jo højere op i hierarkiet, jo sværere er det at finde en meningsfuld driver ned til kunden. De 180.000 i ledelse ligger på virksomhedsniveau — derfor fordeles de ikke, men trækkes fra samlet.",
+"Teoretisk kapacitet":"Drømmescenariet: maskinen kører 24/7, ingen pauser, intet nedbrud, ingen sygdom. Den nås aldrig i virkeligheden, og derfor giver den en kunstigt lav sats. Bruges sjældent som beregningsgrundlag, men er nyttig som benchmark for hvor meget kapacitet der teoretisk findes.",
+"Praktisk kapacitet":"Det realistisk opnåelige — typisk omkring 80% af teoretisk, når man har trukket normale pauser, vedligehold og helligdage fra. Dette er ABC-standarden (Kaplan/Cooper), fordi den giver en stabil sats og tvinger den ubrugte kapacitet frem i lyset som en synlig, separat omkostning i stedet for at skjule den hos kunderne.",
+"Faktisk kapacitet":"Det der rent faktisk skete. Lyder oplagt som nævner, men er en fælde: når salget falder, falder de faktiske enheder, og satsen STIGER — så kunderne straffes for tomgang de ikke har skabt, og lønsomheden bliver ustabil fra år til år. Derfor bruges faktisk normalt ikke til at sætte satser.",
+"Planlagt kapacitet":"Det budgetterede forventede forbrug for den kommende periode. Et fremadrettet skøn, der ligger mellem faktisk og praktisk. Bruges nogle gange til prissætning fordi det afspejler forventningerne, men deler faktisk-kapacitetens svaghed: hvis budgettet er for lavt, presses satsen kunstigt op.",
+"Ledig kapacitet":"Forskellen mellem hvad I betaler for at kunne (praktisk) og hvad I brugte (faktisk), ganget med satsen. Hos jer: 1,4 mio. Det er ledelsens omkostning, ikke kundens — kunden brugte jo netop ikke den kapacitet. At holde den synlig og separat fortæller jer præcis hvor problemet er: I har bygget mere kapacitet end I udnytter. Skjuler man den hos kunderne, jagter man de forkerte løsninger.",
+"ABC — stærke sider":"Den store gevinst er gennemsigtighed: I kan se hvilke kunder og produkter der REELT tjener penge, ikke et udglattet gennemsnit. Det afslørede at Online taber penge trods stort dækningsbidrag. Desuden synliggør den ikke-værdiskabende aktiviteter og giver et grundlag for benchmarking og forbedring.",
+"ABC — svage sider":"ABC er en KALKULATIONSmodel, ikke en beslutningsmodel. Den tager ikke højde for offeromkostninger, for om omkostninger er reversible, eller for hvad markedet vil betale. Derfor må du aldrig træffe en 'drop kunden'-beslutning på ABC-tallet alene — du skal lægge undgåelige/uundgåelige og strategisk værdi oveni. Dertil er den dyr at opbygge og vedligeholde.",
+"Transaktionsdriver":"Den groveste og billigste: tæl bare antal gange. Antal ordrer, antal kald. Virker fint når transaktionerne ligner hinanden. Men hvis én ordre er en hasteleverance til Bornholm og en anden er ti paller til nabobyen, så fanger 'antal ordrer' ikke forskellen — så skal du op på en varigheds- eller intensitetsdriver.",
+"Varighedsdriver":"Mellemtrinnet: mål hvor lang tid aktiviteten tager. Mere præcis end at tælle, fordi den fanger at en kompleks opgave tager længere tid. Eksempel: opsætningstimer på en maskine i stedet for antal opsætninger. Koster mere at registrere, men giver et mere retvisende billede når opgaverne varierer i omfang.",
+"Intensitetsdriver (direkte måling)":"Den mest præcise og dyreste: mål de faktiske ressourcer hver gang. Bruges når selv tiden ikke fanger forskellen — fx hvis nogle opgaver kræver en dyr specialist eller særligt udstyr. Her registrerer man det konkrete forbrug pr. tilfælde. Afvejningen er altid præcision mod måleomkostning.",
+"Årsags-virkningssammenhæng":"Det bærende princip bag al god omkostningsfordeling. En driver skal vælges fordi den FORÅRSAGER omkostningen, ikke bare fordi den korrelerer eller er nem at måle. Det var pointen i pølsevogns-eksemplet: direkte omk. som nøgle er kun forsvarlig HVIS man tror ressourcetrækket faktisk følger de direkte omkostninger.",
+"Fuldfordeling vs. ABC":"En trappe af stigende præcision. Trin 1: fordel efter antal styk (antager alle produkter er ens). Trin 2: fordel efter direkte omk. (én proxy for ressourcetræk). Trin 3: ABC med flere årsagsbestemte drivere. Pointen som chokerede i pølsevognen: skift af nøgle kan vende konklusionen 180 grader om hvem der er rentabel. Derfor er metodevalget en beslutning, ikke en teknikalitet.",
+"Whale-kurve":"Den fortæller en historie ingen tabel kan: lønsomhed er ekstremt skævt fordelt. Hos jer toppede den på 188% — de gode kunder skaber næsten dobbelt så meget som bundlinjen, og de røde i halen æder resten. Visuelt argument for at fokusere indsatsen på de få kunder i hver ende, ikke sprede sig tyndt ud over alle. Lav den på akkumuleret resultat, rangordnet fra bedst til værst.",
+"Customer Lifetime Value":"Skiftet fra 'hvad tjener vi på kunden i år' til 'hvad er kunden værd over hele forholdet'. Tre dæmpere skærer den nominelle indtjening ned til reel værdi: kalkulationsrenten (tidsværdi), fastholdelsen (risiko for at miste dem) og tidshorisonten. Hos jer afslørede den at alle online-segmenter er negative — at vokse online koster mere end det giver ved de nuværende tal.",
+"Fastholdelsesrate":"Sandsynligheden for at kunden stadig er der — og den STABLES. År 1 = 1 (de er her), år 2 = genkøb, år 3 = genkøb². For at overleve to år skal de genkøbe to gange i træk, og sandsynligheder ganges. Løbenørden: 0,52² = 0,27 i år 3. Det er forskellen på en loyal kunde (80% genkøb = lang levetid) og en flygtig (33% = næsten væk efter første år).",
+"Tilbagediskontering":"Oversætter fremtidige kroner til nutidskroner, fordi en krone i dag kan forrentes. Faktor = 1/(1+rente)^år. Med 10%: en krone om tre år er kun 75 øre værd i dag. Jo højere kalkulationsrente, jo hårdere skæres fremtiden — så en utålmodig virksomhed (højt afkastkrav) vil se lavere CLV. Hvis renten var 0%, var der ingen diskontering, og CLV ville være højere.",
+"Anskaffelsesomkostning":"Engangsomkostningen ved at få kunden ind — markedsføring, kampagner, rabatter på første køb. Trækkes fra summen af de tilbagediskonterede bidrag. Det var netop den der gjorde jeres online-segmenter negative: Løbenørden bidrager 83 kr. tilbagediskonteret, men koster 200 at hverve. Sænk anskaffelsen, og CLV kan vendes positiv uden at ændre noget andet.",
+"Dækningsbidrag":"Omsætning minus de variable omkostninger — bidraget til at dække alt det faste. Ligger OVER stregen i resultatopgørelsen. Den vigtige skelnen: positivt DB men negativt resultat (som Online) betyder kunden er fin men trækker meget bagland — kurabelt. Negativt DB (som Sportigan) betyder kunden taber penge på selve varen — en helt anden og alvorligere sygdom.",
+"Resultatgrad":"Resultat ÷ omsætning. Gør store og små kunder sammenlignelige, fordi den måler kvalitet pr. omsætningskrone uafhængigt af størrelse. Men pas på: høj resultatgrad er ikke det samme som mange kroner. No name har lav resultatgrad (2%) men bidrager flest absolutte kroner pga. enorm omsætning. Brug begge tal — grad for effektivitet, kroner for hvor pengene faktisk er.",
+"Volumenbaseret fordelingsnøgle":"En nøgle der fordeler efter mængde (styk, timer, kroner) ud fra antagelsen om at træk følger volumen. Det holder kun hvis produkterne/kunderne er nogenlunde ens i ressourcetræk. Når de ikke er — en burger tager længere tid end en pølse — forvrider den billedet. Det er netop dén antagelse ABC gør op med ved at måle træk pr. aktivitet.",
+"Direkte omkostninger":"Kan henføres direkte uden gætteri — direkte materialer og direkte løn. I BambuRun er produktionsprisen pr. vare direkte. Modsætningen er de indirekte, som kræver en fordelingsnøgle. Jo større andel direkte, jo mindre afhænger kalkulationen af fordelingsvalg — og jo mere troværdig er den.",
+"Indirekte omkostninger (IPO)":"Indirekte produktionsomkostninger — kan ikke henføres direkte, så de skal fordeles. Det er PRÆCIS disse omkostninger hele striden handler om: vælger du en grov nøgle (styk) eller en finere (ABC)? I traditionelle systemer hedder de IPO; i ABC-sammenhæng kalder casen dem kapacitetsomkostninger. Samme slags penge, forskelligt ord efter metode.",
+"Omkostningspulje":"En homogen samling af omkostninger der fordeles under ét. Homogen er nøgleordet: posterne i puljen skal drives af nogenlunde samme faktor, ellers giver fordelingen mening for nogle og ikke for andre. I ABC svarer hver aktivitet til sin egen pulje (kundeservice, levering osv.), netop for at holde dem homogene.",
+"Single rate":"Smider faste og variable i én pulje og fordeler med én sats efter faktisk forbrug. Simpelt, men skjuler at de faste omkostninger ikke varierer med forbruget. Resultatet: en afdeling der bruger lidt slipper kunstigt billigt, selvom kapaciteten måske blev bygget til dem. Kan føre til forkerte interne afregninger.",
+"Dual rate":"Splitter i to: variable fordeles efter faktisk forbrug, faste efter budgetteret/reserveret kapacitet. Bedre end single rate, fordi de faste omkostninger så bæres af den der reserverede kapaciteten — ikke den der tilfældigt brugte mest i år. Det er nøjagtig samme princip som ledig kapacitet i ABC: faste omk. skal ikke svinge med tilfældigt forbrug.",
+"Balanced Scorecard":"Svar på kritikken af at man kun styrede efter finansielle tal, som er bagudskuende. BSC tilføjer tre fremadrettede perspektiver, så man fanger problemer FØR de rammer bundlinjen. Kæden er KSF → KPI → target → initiativer, og målene skal afspejle årsags-virkningssammenhænge mellem perspektiverne — ikke bare være en tilfældig liste nøgletal.",
+"De fire perspektiver":"Finans, Kunder, Processer, Læring & vækst. Logikken læses nedefra og op som en kausalkæde: dygtige, motiverede medarbejdere (læring) → effektive processer → tilfredse kunder → gode finansielle resultater. Hvert perspektiv er en forudsætning for det over. Det er denne årsagskæde der gør BSC til mere end fire adskilte måltavler.",
+"Strategikort":"Det visuelle bindeled mellem strategi og måling. Det oversætter mission/vision/strategi til konkrete årsags-virkningssammenhænge på tværs af de fire perspektiver — FØR man overhovedet vælger KPI'er. Det skaber konsensus i ledelsen og gør strategiske hypoteser eksplicitte ('hvis vi træner medarbejderne, så stiger kundetilfredsheden').",
+"KSF":"Kritiske succesfaktorer: de få ting der SKAL lykkes for at strategien indfries. De udledes af strategikortet og knytter hvert perspektiv til noget konkret og målbart. Eksempel for BambuRun: 'høj kundeloyalitet i online-segmentet' kan være en KSF under kundeperspektivet, som så får en KPI (fx genkøbsprocent) hængt på.",
+"KPI":"Målepunktet for en KSF — det der oversætter 'vi vil være gode til X' til et tal man kan følge. Pas på adfærdseffekten: 'what you measure is what you get'. Måler du kun på antal solgte, sælger folk billigt; måler du på dækningsbidrag, passer de på prisen. Et godt KPI er koblet til strategien, enkelt, og har et ambitionsniveau (target).",
+"KPI-faldgruber":"De typiske fejl: for mange KPI'er (organisationen kan ikke styre efter 40 tal), manglende kobling til strategien (man måler det nemme i stedet for det vigtige), dårlig datakvalitet, og intet target så man ikke ved hvornår det er godt nok. Resultatet bliver et nøgletalssystem i stedet for styring. Keep it simple og strategisk.",
+"De tre P'er":"People, Planet, Profit — triple bottom line. Tanken er at en virksomhed skal måles på mere end profit alene: også social og miljømæssig værdi. Relevant for BambuRun, hvis hele forretning bygger på bæredygtighed. I en BSC kan det betyde et femte perspektiv eller bæredygtigheds-KPI'er indlejret i de fire eksisterende.",
+"Scope 1, 2 og 3":"Klimaregnskabets tre niveauer. Scope 1: virksomhedens egne direkte udledninger. Scope 2: indkøbt energi. Scope 3: hele værdikæden — leverandører, transport, kundernes brug og bortskaffelse. Scope 3 er typisk langt størst og sværest at måle. For BambuRun (produktion i Herning, leverandører, transport til lager) ligger meget af klimaaftrykket netop i scope 3.",
+"Indsats- vs. resultatmål":"Resultatmål (lagging) måler udfaldet — fx omsætning, kundetilfredshed — men kommer for sent til at reagere på. Indsatsmål (leading) måler det man gør undervejs — fx antal kundeopkald, træningstimer — og virker som tidlige advarsler. Et godt scorecard balancerer begge: indsatsmål så du kan styre, resultatmål så du kan se om det virkede.",
+"Quality Costing":"Grundtanken: det er billigere at forhindre fejl end at udbedre dem senere. Omkostningerne falder i fire typer, og jo tidligere i processen du fanger fejlen, jo billigere — forebyggelse er billigst, eksterne fejl (kunden opdager det) dyrest. Målet er ikke nul kvalitetsomkostninger, men det optimale niveau hvor forebyggelse koster mindre end de fejl den sparer.",
+"Forebyggelsesomkostninger":"Penge brugt på at fejl slet ikke opstår: oplæring, ISO-certificering, kvalificering af leverandører, design af gode processer. Det er den billigste type, fordi den fanger problemet før det koster noget. En krone i forebyggelse sparer typisk mange kroner i senere fejludbedring — det er hele rationalet bag quality costing.",
+"Kontrolomkostninger":"Penge brugt på at FINDE fejl før de slipper ud: test af råvarer, mellemvarer og færdigvarer, måleudstyr, inspektion. Ligger mellem forebyggelse og fejlomkostninger. Fanger fejlen efter den er opstået, men før kunden ser den — dyrere end at forebygge, men langt billigere end en ekstern fejl.",
+"Interne fejlomkostninger":"Fejl opdaget INDEN levering: omarbejde, kassation, spild, forsinkelse af øvrig produktion. Dyrere end kontrol, fordi fejlen allerede er sket og ressourcer er spildt. Men stadig billigere end hvis kunden havde opdaget den — her er skaden begrænset til virksomhedens egne mure.",
+"Eksterne fejlomkostninger":"Den dyreste type: fejl kunden opdager. Klagehåndtering, returnering, garanti, udbedring — og værst af alt tabt omdømme og mistede fremtidige kunder, som ikke engang står i regnskabet. Det er her offeromkostningerne gemmer sig. En enkelt viral klage kan koste langt mere end fejlen i sig selv. Derfor betaler forebyggelse sig.",
+"Kaizen costing":"Løbende, små forbedringer i PRODUKTIONSfasen — modsat target costing, der laver de store greb i designfasen. Filosofien er kontinuerligt pres: hver periode skæres omkostningerne en lille smule, gennem medarbejderdrevne forbedringer. Styrken er vedvarende effektivisering; risikoen er at det kan stresse medarbejdere og fjerne nødvendig buffer.",
+"Lean":"Fokus på at fjerne alt der ikke skaber værdi for kunden — spild i form af ventetid, overproduktion, unødig transport, lager. Fordelen er effektive processer og bedre konkurrenceevne. Bagsiden: skåret for hårdt fjerner man buffer og fleksibilitet, hvilket kan give problemer når verden ændrer sig (fx leverandørsvigt). Effektivitet mod robusthed.",
+"Standardomkostningsregnskab":"Tænk på det som en obduktion af budgetafvigelsen. Du ved at I ramte fx -5.450 i DB ift. budget, men ikke hvorfor. Standardregnskabet skiller afvigelsen ad, så du kan sige 'salget gik op i pris (+4.500), men materialeforbruget løb løbsk (-4.500) og lønnen var dyrere (-2.700)'. Så ved controlleren hvilken afdeling der skal handle — ikke bare AT det gik galt, men HVOR.",
+"Statisk budget":"Det budget I lagde inden perioden, med planlagte mængder OG planlagte priser. Det er fast (statisk) — det ændrer sig ikke selvom virkeligheden gør. Problemet ved at sammenligne realiseret direkte med statisk budget er at to ting blander sig: solgte I anderledes mængder OG til andre priser? Derfor skubbes det fleksible budget ind imellem for at adskille effekterne.",
+"Fleksibelt budget":"Det smarte mellemled. Du tager de budgetterede priser og standarder, men ganger med de FAKTISKE mængder. Så får du 'hvad burde det have kostet at producere det vi faktisk producerede?'. Sammenlign statisk → fleksibelt = ren mængdeeffekt (vi solgte mere/mindre). Sammenlign fleksibelt → realiseret = ren pris- og effektivitetseffekt. Det er nøglen til at isolere årsagerne.",
+"Mængdeafvigelse (volumen)":"Standard DB × (faktisk - budgetteret afsætning). Den fanger KUN at I solgte et andet antal end planlagt — ikke om prisen eller effektiviteten ændrede sig. Eksempel: budget 1.000 stk, solgt 900, standard-DB 50 → (900-1000) × 50 = -5.000. En ren volumeneffekt. Den hører typisk til salg/marked, ikke produktion.",
+"Salgsprisafvigelse":"Faktisk mængde × (faktisk - budgetteret salgspris). Isolerer priseffekten på omsætningssiden. Eksempel: solgte 900 stk til 105 i stedet for 100 → 900 × 5 = +4.500 gunstig. Den fortæller om I fik mere eller mindre pr. solgt enhed end planlagt — et salgs-ansvar, ikke et produktions-ansvar.",
+"Pris-/satsafvigelse (input)":"Faktisk mængde × (standard - faktisk pris) på input som materialer og løn. Eksempel spande: I brugte 240 kg, standard-pris 15, faktisk 16 → 240 × (15-16) = -240 ugunstig. I betalte mere pr. enhed input end standard. Ansvaret ligger hos indkøb (materialepris) eller HR/marked (lønsats) — ikke hos den der bruger materialet.",
+"Effektivitets-/forbrugsafvigelse":"Standard pris × (standard - faktisk forbrug). Isolerer OM I brugte mere eller mindre input pr. enhed. Eksempel spande: standard 250 kg, faktisk 240 kg, standard-pris 15 → 15 × (250-240) = +150 gunstig. I var mere effektive end standard. Det er et produktions-ansvar — det handler om hvordan ressourcerne blev brugt, ikke hvad de kostede at købe.",
+"Gunstig vs. ugunstig afvigelse":"F (favorable/gunstig) løfter DB, U (unfavorable/ugunstig) sænker det. Den klassiske fælde er fortegn: hvis de faktiske omkostninger er LAVERE end budget, er afvigelsen gunstig — selvom tallet 'mangler' i regnskabet. Tjek altid: hvad gør denne afvigelse ved dækningsbidraget? Op = gunstig, ned = ugunstig. Lad være med at stirre på om råtallet er plus eller minus.",
+"Afvigelses-niveauer":"En tragt fra groft til fint. Niveau 0: den samlede DB-afvigelse (fx -5.450) — du ved noget gik galt. Niveau 1: del op i salgsvolumen-afvigelse (solgte vi nok?) og fleksibelt-budget-afvigelse (var pris/effektivitet som planlagt?). Niveau 2-3: bryd den sidste ned i salgspris, inputpris/sats og effektivitet. Jo længere ned, jo mere præcist kan controlleren pege på hvem der skal handle."
+};
+
+let active="all";
+let order=[];
+let idx=0;
+let known=new Set();    // kort markeret som 'kan det' — kan slås til/fra
+let showMode="all";     // "all" = alle kort, "unknown" = kun dem jeg ikke kan
+
+// Husk markeringer på tværs af dage (virker på egen hjemmeside; ignoreres lydløst hvis storage er blokeret)
+try{
+  const saved=localStorage.getItem("oks_known");
+  if(saved) known=new Set(JSON.parse(saved));
+}catch(e){}
+function save(){
+  try{ localStorage.setItem("oks_known",JSON.stringify([...known])); }catch(e){}
+}
+
+const filtersEl=document.getElementById("filters");
+const appEl=document.getElementById("app");
+const countEl=document.getElementById("count");
+const progFill=document.getElementById("progFill");
+
+function buildFilters(){
+  filtersEl.innerHTML="";
+  const all=document.createElement("button");
+  all.className="chip all"+(active==="all"?" active":"");
+  all.innerHTML=`Alle <span style="opacity:.6">${CARDS.length}</span>`;
+  all.onclick=()=>{active="all";startRound()};
+  filtersEl.appendChild(all);
+  for(const k in CATS){
+    const n=CARDS.filter(c=>c.cat===k).length;
+    const b=document.createElement("button");
+    b.className="chip"+(active===k?" active":"");
+    b.style.setProperty("--c",CATS[k].c);
+    b.innerHTML=`<span class="dot"></span>${CATS[k].name} <span style="opacity:.55">${n}</span>`;
+    b.onclick=()=>{active=k;startRound()};
+    filtersEl.appendChild(b);
+  }
+}
+
+function pool(){
+  const base=active==="all"?CARDS:CARDS.filter(c=>c.cat===active);
+  if(showMode==="unknown") return base.filter(c=>!known.has(CARDS.indexOf(c)));
+  return base.slice();
+}
+
+function startRound(){
+  order=pool().map(c=>CARDS.indexOf(c));
+  idx=0;
+  buildFilters();render();
+}
+
+function shuffle(){
+  for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]]}
+  idx=0;render();
+}
+
+function updateBar(){
+  const catCards=active==="all"?CARDS:CARDS.filter(c=>c.cat===active);
+  const totalCat=catCards.length;
+  const knownInCat=catCards.filter(c=>known.has(CARDS.indexOf(c))).length;
+  countEl.textContent=`Kort ${order.length?Math.min(idx+1,order.length):0} af ${order.length}  ·  ${knownInCat} af ${totalCat} markeret som kan`;
+  progFill.style.width=totalCat?(knownInCat/totalCat*100)+"%":"0%";
+}
+
+function render(){
+  updateBar();
+  if(order.length===0){
+    appEl.innerHTML=`<div class="done">
+      <h2>Alle kort er markeret 🎯</h2>
+      <p>Du har markeret alle kort i denne visning som 'kan det'.<br>Skift til 'Vis alle' for at se dem igen.</p>
+      <button class="btn btn-know" style="flex:0 0 auto;padding:13px 24px" onclick="showMode='all';document.getElementById('mode').textContent='Vis kun dem jeg ikke kan';document.getElementById('mode').classList.remove('active-mode');startRound()">Vis alle igen</button>
+    </div>`;
+    return;
+  }
+  if(idx>=order.length)idx=0;
+  const c=CARDS[order[idx]];
+  const cv=CATS[c.cat].c;
+  const deep=MORE[c.term]||"";
+  appEl.innerHTML=`
+    <div class="stage">
+      <button class="park${known.has(order[idx])?' on':''}" id="park" title="Markér / fjern markering">${known.has(order[idx])?'Kan det':'Markér som kan'}</button>
+      <div class="card" id="card" style="--c:${cv}">
+        <div class="face front">
+          <div class="tag">${CATS[c.cat].name}</div>
+          <div class="term">${c.term}</div>
+          <div class="hint">Forklar højt, så vend kortet</div>
+        </div>
+        <div class="face back">
+          <div class="tag">${CATS[c.cat].name}</div>
+          <div class="def">${c.def}</div>
+          <div class="extra">${c.extra}</div>
+          ${deep?`<button class="uddyb" id="uddyb">Uddyb forklaringen</button><div class="deep" id="deep">${deep}</div>`:""}
+        </div>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn btn-nav" id="prev" title="Forrige">←</button>
+      <button class="btn btn-know" id="flip">Vend kortet</button>
+      <button class="btn btn-nav" id="next" title="Næste">→</button>
+    </div>`;
+
+  const card=document.getElementById("card");
+  card.onclick=(e)=>{if(e.target.closest(".uddyb")||e.target.closest(".deep"))return;card.classList.toggle("flipped")};
+  document.getElementById("flip").onclick=(e)=>{e.stopPropagation();card.classList.toggle("flipped")};
+  document.getElementById("prev").onclick=(e)=>{e.stopPropagation();idx=(idx-1+order.length)%order.length;render()};
+  document.getElementById("next").onclick=(e)=>{e.stopPropagation();idx=(idx+1)%order.length;render()};
+  document.getElementById("park").onclick=(e)=>{
+    e.stopPropagation();
+    const ci=order[idx];
+    if(known.has(ci))known.delete(ci); else known.add(ci);
+    save();
+    if(showMode==="unknown"&&known.has(ci)){
+      order.splice(idx,1);
+      if(idx>=order.length)idx=0;
+    }
+    render();
+  };
+  const u=document.getElementById("uddyb");
+  if(u)u.onclick=(e)=>{e.stopPropagation();document.getElementById("deep").classList.toggle("show");u.textContent=document.getElementById("deep").classList.contains("show")?"Skjul forklaring":"Uddyb forklaringen"};
+}
+
+document.getElementById("shuffle").onclick=shuffle;
+document.getElementById("mode").onclick=()=>{
+  showMode = showMode==="all"?"unknown":"all";
+  const m=document.getElementById("mode");
+  m.textContent = showMode==="all"?"Vis kun dem jeg ikke kan":"Vis alle kort";
+  m.classList.toggle("active-mode", showMode==="unknown");
+  startRound();
+};
+document.getElementById("clear").onclick=()=>{known=new Set();save();startRound()};
+document.addEventListener("keydown",e=>{
+  if(e.code==="Space"){e.preventDefault();const c=document.getElementById("card");if(c)c.classList.toggle("flipped")}
+  if(e.key==="ArrowRight"){const n=document.getElementById("next");if(n)n.click()}
+  if(e.key==="ArrowLeft"){const p=document.getElementById("prev");if(p)p.click()}
+});
+
+startRound();
+</script>
+</body>
+</html>
